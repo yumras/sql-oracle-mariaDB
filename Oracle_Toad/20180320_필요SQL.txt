@@ -1,0 +1,56 @@
+----------------------------------------------------
+------------- 기존 샘플 저장 테이블 삭제----------------
+----------------------------------------------------
+
+DROP TABLE kopo_product_volume
+
+create table kopo_product_volume(
+regionid varchar2(20),
+productgroup varchar2(20),
+yearweek varchar2(8),
+volume number not null,
+constraint pk_kopo_product_volume primary key(regionid,productgroup, yearweek));
+ 
+-- 초기 도메임 무결성
+insert into kopo_product_volume
+values('a01','productgroup','201702',NULL);
+
+--------- KOPO_PRODUCT_VOLUME.xlsx -----
+----------- 데이터 삽입 수행 --------------
+-----------------------------------------
+
+-- 데이터 삽입 후 개체 무결성 삽입 시
+insert into kopo_product_volume
+values('A01','ST0002','201503',20);
+
+-- 데이터 삽입 후 개체 무결성 (업데이트 시)
+update kopo_product_volume
+set yearweek = '201502'
+where yearweek = '201501';
+
+DROP TABLE KOPO_PRODUCT_VOLUME_FOREIGN
+
+DROP TABLE kopo_event_info_foreign 
+
+ create table kopo_event_info_foreign(
+ eventid varchar2(20),
+ eventperiod varchar2(20),
+ PROMOTION_RATIO NUMBER,
+ constraint pk_kopo_event_info_foreign primary key(eventid))
+
+ create TABLE KOPO_PRODUCT_VOLUME_FOREIGN(
+ REGIONID VARCHAR2(20),
+ PRODUCTGROUP VARCHAR2(20),
+ YEARWEEK VARCHAR2(8),
+ VOLUME NUMBER NOT NULL,
+ EVENTID VARCHAR2(20),
+ constraint pk_kopo_product_volume_foreign primary key(REGIONID, PRODUCTGROUP, YEARWEEK),
+ constraint fk_kopo_product_volume_foreign foreign key(eventid) references kopo_event_info_foreign(eventid) )
+ 
+ -- 참조 무결성 예제: (부모키가 없는 경우)
+ insert into kopo_product_volume_foreign
+ values ('A01','ST00002','201501',50,'EVTEST')
+  
+  -- 참조 무결성 예제: (자식이 있는데 지우려고 시도하는경우)
+DELETE FROM KOPO_EVENT_INFO_FOREIGN
+WHERE EVENTID = 'EV00001'

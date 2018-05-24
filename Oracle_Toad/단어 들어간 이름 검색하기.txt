@@ -1,0 +1,4 @@
+-- 테이블 명에 MST 들어간 것 찾기
+select * from tabs
+where table_name like '%MST%'
+
