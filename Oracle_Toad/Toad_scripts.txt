@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿04.03
 [KOPO_SERVER_1]
 select * from tabs;
@@ -779,3 +780,649 @@ ORDER BY REGIONID, PRODUCT
 
 
 
+=======
+﻿04.03
+[KOPO_SERVER_1]
+select * from tabs;
+
+drop table kopo_product_volume;
+
+create table kopo_product_volume(
+regionid varchar2(20),
+productgroup varchar2(20),
+yearweek varchar2(8),
+volume number not null,
+constraint pk_kopo_product_volume primary key(regionid,productgroup,yearweek));
+
+select * from kopo_product_volume;
+
+insert into kopo_product_volume
+values('regionid','productgroup',null,'volume');
+
+insert into kopo_product_volume
+values('regionid','productgroup','201702',null);
+
+insert into kopo_product_volume
+values('A01','ST0002','201503',20);
+
+insert into kopo_product_volume
+values('A01','ST0002','201504',20);
+
+desc kopo_product_volume;
+
+
+update kopo_product_volume
+set yearweek = '201504'
+where 1=1
+and yearweek = '201503';
+
+ create table kopo_event_info_foreign(
+ eventid varchar2(20),
+ eventperiod varchar2(20),
+ PROMOTION_RATIO NUMBER,
+ constraint pk_kopo_event_info_foreign primary key(eventid));
+
+ create TABLE KOPO_PRODUCT_VOLUME_FOREIGN(
+ REGIONID VARCHAR2(20),
+ PRODUCTGROUP VARCHAR2(20),
+ YEARWEEK VARCHAR2(8),
+ VOLUME NUMBER NOT NULL,
+ EVENTID VARCHAR2(20),
+ constraint pk_kopo_product_volume_foreign primary key(REGIONID, PRODUCTGROUP, YEARWEEK),
+ constraint fk_kopo_product_volume_foreign foreign key(eventid) references kopo_event_info_foreign(eventid) 
+ on delete set null);
+
+select * from kopo_event_info_foreign;
+
+select * from KOPO_PRODUCT_VOLUME_FOREIGN;
+
+desc KOPO_PRODUCT_VOLUME_FOREIGN;
+
+ insert into kopo_product_volume_foreign
+ values ('A01','ST00002','201501',50,'EVTEST');
+
+DELETE FROM KOPO_EVENT_INFO_FOREIGN
+WHERE EVENTID = 'EV00001';
+
+04.10
+[KOPO_SERVER_1]
+
+SELECT * FROM TABS;
+
+----데이터조회(SELECTION)----
+SELECT * FROM KOPO_PRODUCT_VOLUME
+WHERE 1=1
+AND VOLUME > 100000;
+
+SELECT * FROM KOPO_PRODUCT_VOLUME
+WHERE 1=1
+AND YEARWEEK >= 201601
+AND PRODUCTGROUP = 'ST0001';
+
+-----------UNION------------
+--A01 지역 정보--
+SELECT REGIONID, PRODUCTGROUP, YEARWEEK, VOLUME
+    FROM KOPO_PRODUCT_VOLUME_A01
+UNION
+--A02 지역 정보--
+SELECT REGIONID, PRODUCTGROUP, YEARWEEK, VOLUME
+    FROM KOPO_PRODUCT_VOLUME_A02;
+
+
+SELECT * FROM KOPO_CHANNEL_RESULT_A01
+UNION
+SELECT * FROM KOPO_CHANNEL_RESULT_A02;
+
+SELECT * FROM DBA_USERS;
+
+-- 'CTRL + E' --
+-- NAME:KOPO / TABLE:USER --
+--- 쿼리 분석 ---
+
+SELECT REGIONID, PRODUCTGROUP, YEARWEEK, QTY
+    FROM KOPO_CHANNEL_RESULT_A01
+UNION
+SELECT REGIONID, PRODUCTGROUP, YEARWEEK, QTY
+    FROM KOPO_CHANNEL_RESULT_A02;
+
+SELECT
+   'D516' AS MEASUREID,  --MREASUREID 칼럼 생기면서 값이 D516--
+   3*4 AS TEMPVALUE,  --TEMPVALUE 칼럼 생기면서 값이 12--
+   REGIONID || '_' || PRODUCTGROUP || '_' || YEARWEEK AS KEY,
+   -- KEY 칼럼 생기면서 REGIONID_PRODUCTGROUP_YEARWEEK--
+   CONCAT(REGIONID, PRODUCTGROUP) AS CON, --CONCAT은 인수 2개만 가능
+   REGIONID,
+   PRODUCTGROUP,
+   YEARWEEK,
+   VOLUME
+FROM KOPO_PRODUCT_VOLUME
+
+04.17
+[KOPO_SERVER_1]
+SELECT * FROM TABS;
+
+SELECT
+    'KOPO_D510' AS MeasureID,
+    REGIONID,
+    PRODUCTGROUP,
+    YEARWEEK,
+    VOLUME,
+    CAST(YEARWEEK AS NUMBER) * VOLUME AS TEST14
+FROM KOPO_PRODUCT_VOLUME;
+
+SELECT * FROM KOPO_PRODUCT_VOLUME;
+
+SELECT DISTINCT REGIONID
+    FROM KOPO_PRODUCT_VOLUME;
+
+SELECT * FROM KOPO_CHANNEL_SEASONALITY;
+	위, 아래가 같다
+SELECT DISTINCT REGIONID
+    , PRODUCTGROUP
+    , PRODUCT
+    , YEARWEEK
+    , YEAR
+    , WEEK
+    , QTY
+    FROM KOPO_CHANNEL_SEASONALITY;
+
+
+SELECT DISTINCT PRODUCTGROUP AS PRODUCT
+FROM KOPO_PRODUCT_VOLUME;
+
+----------------------------------<내 서버에 KOPO서버 링크 만들기>----------------------------------
+-- 데이터베이스 링크 생성
+-- 원격지의 oracle db에 접근하기 위한 설정임
+-- 1번. tnsname 활용
+CREATE DATABASE LINK KOPO_LINK
+CONNECT TO kopo
+IDENTIFIED BY kopo
+Using 'KOPO_SERVEER_1'
+
+-- 2번. 직접호출방식 활용
+CREATE DATABASE LINK KOPO_LINK
+CONNECT TO kopo
+IDENTIFIED BY kopo
+Using '(DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.110.111)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = orcl)
+    )
+  )'
+
+-- 생성된 데이터베이스 링크 확인방법
+SELECT * FROM ALL_DB_LINKS
+
+-- 데이터베이스 링크 삭제방법
+DROP DATABASE LINK ASUS_LINK;
+
+-- 데이터베이스 링크 사용
+SELECT * FROM 테이블명@KOPO_LINK;
+SELECT * FROM KOPO_CHANNEL_SEASONALITY@KOPO_LINK;
+
+04.17
+[KOPO_SERVER_1]
+SELECT * FROM TABS;
+
+--1 -- (실무에서 가장 많이 사용)
+select * from kopo_product_volume@KOPO_LINK
+where 1=1
+and productgroup = 'ST0002'
+and yearweek in('201515', '201516');
+
+--2
+select * from kopo_product_volume@KOPO_LINK
+where 1=1
+and productgroup = 'ST0002'
+and yearweek > 201514
+and yearweek < 201517;
+
+--3
+select * from kopo_product_volume@KOPO_LINK
+where 1=1
+and productgroup = 'ST0002'
+    and (yearweek ='201515'
+        or yearweek = '201516');
+
+[KOPO_SERVER_2]
+select * from kopo_promotion;
+
+select regionid, item, targetweek, planweek, map_price, ir, pmap,
+    round(pmap *0.9, 0) as pmap10, product
+from kopo_promotion;
+    
+-- 1. case에 null값 치환 넣어 계산
+select regionid, item, targetweek, planweek, map_price, ir, pmap, product,
+    round(
+        (case when map_price = 0
+                then 1
+              when map_price is null
+                then 1
+        else pmap/map_price end)*100,2)||'%' as percent 
+from kopo_promotion;
+
+-- 2. NVL 사용해 계산
+select regionid, item, targetweek, planweek, map_price, ir, pmap, product,
+    round(
+        (case when map_price = 0
+                then 1
+        else pmap/nvl(map_price,1) end)*100,2)||'%' as percent 
+from kopo_promotion;
+
+select * from kopo_product_volume
+where 1=1
+and yearweek in ('201515','201517','201519');
+
+select * from tabs
+where table_name like '%MST%'
+
+05.08
+[KOPO_SERVER_2]
+
+SELECT * FROM TABS;
+
+-- 사용자 조건 입력받기
+-- 사용자 조건(&PRODUCT) 입력 화면 뜸
+-- 사용자 조건 입력('ST0001')<-'' 확인
+SELECT
+   REGIONID, PRODUCTGROUP, YEARWEEK
+FROM KOPO_PRODUCT_VOLUME
+WHERE PRODUCTGROUP = &PRODUCT
+OR YEARWEEK = '201544'
+;
+
+SELECT * FROM KOPO_PRODUCT_VOLUME;
+
+SELECT * FROM KOPO_PROMOTION;
+
+-- BETWEEN 함수 , 조건검색(&조건명) 사용 예제
+SELECT
+   REGIONID, ITEM, TARGETWEEK, PLANWEEK, MAP_PRICE, IR, PMAP, PRODUCT
+FROM KOPO_PROMOTION
+WHERE TARGETWEEK BETWEEN &STARTWEEK AND &ENDWEEK
+;
+
+SELECT
+   REGIONID, ITEM, TARGETWEEK, PLANWEEK, MAP_PRICE, IR, PMAP, PRODUCT
+FROM KOPO_PROMOTION
+WHERE TARGETWEEK BETWEEN 201501 AND 201503
+;
+
+SELECT
+   REGIONID, ITEM, TARGETWEEK, PLANWEEK, MAP_PRICE, IR, PMAP, PRODUCT
+FROM KOPO_PROMOTION
+WHERE TARGETWEEK BETWEEN 201501 AND 201503
+ORDER BY TARGETWEEK DESC
+;
+
+SELECT *
+FROM KOPO_CUSTOMERDATA;
+
+SELECT DISTINCT GENDER
+FROM KOPO_CUSTOMERDATA;
+-- GENDER 3개 확인
+
+-- (1)NOT AVAILABLE / MALE / FEMALE 순으로 정렬(단순하게 GENDER DESC)(N / M / F 순서 이용)
+SELECT *
+FROM KOPO_CUSTOMERDATA
+ORDER BY GENDER DESC
+;
+
+-- (2)NOT AVAILABLE / MALE / FEMALE 순으로 정렬(CASE 사용)
+SELECT A.*,
+    CASE WHEN A.GENDER = 'Not Available'
+         THEN 0
+         WHEN A.GENDER = 'Male'
+         THEN 1
+         ELSE 2 END AS SORT_ORDER
+FROM KOPO_CUSTOMERDATA A
+ORDER BY SORT_ORDER
+;
+
+-- (3)NOT AVAILABLE / MALE / FEMALE 순으로 정렬(CASE 사용)(UPPER로 대문자 변환해서 조건 검색)(LOWER=소문자)
+SELECT A.*,
+    CASE WHEN UPPER(A.GENDER) = 'NOT AVAILABLE'
+         THEN 0
+         WHEN UPPER(A.GENDER) = 'MALE'
+         THEN 1
+         ELSE 2 END AS SORT_ORDER
+FROM KOPO_CUSTOMERDATA A
+ORDER BY SORT_ORDER
+;
+
+SELECT * FROM KOPO_PRODUCT_VOLUME;
+
+-- 지역, 상품, 주차 오름차순 형태로 조회하기
+SELECT * 
+FROM KOPO_PRODUCT_VOLUME
+ORDER BY REGIONID, PRODUCTGROUP, YEARWEEK;
+
+-- (응용)지역, 주차 오름차순, 상품 내림차순 형태로 조회하기
+SELECT * 
+FROM KOPO_PRODUCT_VOLUME
+ORDER BY REGIONID, PRODUCTGROUP DESC, YEARWEEK;
+
+-- UNION (합집합)(ALL 없으면 정렬, 중복제거)
+SELECT * 
+FROM KOPO_PRODUCT_VOLUME
+WHERE PRODUCTGROUP = 'ST0001'
+UNION
+SELECT * 
+FROM KOPO_PRODUCT_VOLUME
+WHERE PRODUCTGROUP = 'ST0002'
+;
+
+-- UNION ALL (합집합)(ALL=정렬, 중복값 제거 X)
+SELECT * 
+FROM KOPO_PRODUCT_VOLUME
+WHERE PRODUCTGROUP = 'ST0001'
+UNION ALL
+SELECT * 
+FROM KOPO_PRODUCT_VOLUME
+WHERE PRODUCTGROUP = 'ST0002'
+;
+
+-- INTERSECT (교집합)
+SELECT YEARWEEK
+FROM KOPO_PRODUCT_VOLUME
+WHERE PRODUCTGROUP = 'ST0001'
+INTERSECT
+SELECT YEARWEEK
+FROM KOPO_PRODUCT_VOLUME
+WHERE PRODUCTGROUP = 'ST0002'
+;
+
+-- MINUS (차집합)
+-- 테이블 조회 후 제외할 조건을 추가
+SELECT *
+FROM KOPO_PRODUCT_VOLUME
+WHERE PRODUCTGROUP = 'ST0001'
+AND YEARWEEK NOT IN (
+                     SELECT DISTINCT YEARWEEK
+                        FROM KOPO_CHANNEL_RESULT_NEW
+                    )
+;
+
+SELECT * FROM KOPO_CHANNEL_RESULT_NEW;
+
+SELECT DISTINCT YEARWEEK
+FROM KOPO_CHANNEL_RESULT_NEW;
+
+SELECT * FROM KOPO_CHANNEL_SEASONALITY_NEW;
+
+SELECT
+    *
+    FROM KOPO_CHANNEL_SEASONALITY_NEW
+    WHERE 1=1
+    AND LOWER(REGIONID) = &UI_INPUT1
+    AND LOWER(PRODUCT) = &UI_INPUT2
+;
+
+SELECT * FROM KOPO_CHANNEL_SEASONALITY_NEW
+    WHERE 1=1
+    AND LOWER(REGIONID) = 'a60'
+    AND LOWER(PRODUCT) = 'product4'
+;
+ 
+
+-- 컬럼 값 합치기 (CONCAT은 2가지만 합칠 수 있어서 3개 합칠땐 2번 써야한다)
+SELECT 
+    CONCAT(REGIONID,CONCAT('_',PRODUCT)) AS KEYCOL1,
+    REGIONID||'_'||PRODUCT AS KEYCOL2
+FROM KOPO_CHANNEL_SEASONALITY_NEW
+;
+
+-- 컬럼 값 추출하기
+SELECT 
+    PRODUCT,
+    SUBSTR(PRODUCT,1,7)
+FROM KOPO_CHANNEL_SEASONALITY_NEW
+;
+
+SELECT SUBSTR('201642',0,4) FROM DUAL;
+-- 2016
+
+SELECT SUBSTR('201642',5,6) FROM DUAL;
+-- 42
+
+-- 주어진 문자열의 왼쪽/오른쪽에 특정 문자를 채움
+SELECT LPAD('UN42F6000', 13, '0') FROM DUAL;
+SELECT RPAD('UN42F6000', 13, '0') FROM DUAL;
+
+SELECT UPPER('asddxcDDDDDss') FROM DUAL;
+
+
+-- 예제
+-- KOPO_CUSTOMERDATA 조회
+SELECT * FROM KOPO_CUSTOMERDATA;
+-- KOPO_CUSTOMERDATA 에서 CUSTOMERCODE를 12자리로(부족분은 앞에 *로)
+SELECT LPAD(CUSTOMERCODE, 12, '*') AS KOPO_CUSTOMERCODE
+FROM KOPO_CUSTOMERDATA;
+
+05.15
+[KOPO_SERVER_2]
+
+SELECT * FROM TABS;
+
+SELECT * FROM SORT_EXAMPLE;
+
+DESC SORT_EXAMPLE;
+
+SELECT * FROM SORT_EXAMPLE
+ORDER BY LPAD(WEEK,2,0);
+
+SELECT * FROM SORT_EXAMPLE
+ORDER BY TO_NUMBER(WEEK);
+
+
+-- 고객코드 10자리로 맞추고(10자리 이하면 왼쪽에 0추가) 맨 뒤 4자리 *로 치환 --
+SELECT * FROM KOPO_CUSTOMERDATA;
+
+SELECT CUSTOMERCODE FROM KOPO_CUSTOMERDATA;
+
+SELECT 
+    CUSTOMERCODE
+    ,REPLACE(LPAD(CUSTOMERCODE,10,'0'),SUBSTR(LPAD(CUSTOMERCODE,10,'0'),-4),'****')  
+FROM KOPO_CUSTOMERDATA;
+
+SELECT 
+    CUSTOMERCODE
+    ,REPLACE(LPAD(CUSTOMERCODE,10,'0'),SUBSTR(CUSTOMERCODE,-4),'****')  
+FROM KOPO_CUSTOMERDATA;
+
+SELECT CUSTOMERCODE FROM KOPO_CUSTOMERDATA ORDER BY TO_NUMBER(CUSTOMERCODE);
+
+-- ROUND, CEIL, FLOOR, MOD, POWER 예제 --
+SELECT
+    FIRST_NUMBER
+    ,SECOND_NUMBER
+    ,FIRST_NUMBER/SECOND_NUMBER AS AVG
+    ,ROUND(FIRST_NUMBER/SECOND_NUMBER,2) AS ROUND_EX
+    ,CEIL(FIRST_NUMBER/SECOND_NUMBER) AS CEIL_EX
+    ,FLOOR(FIRST_NUMBER/SECOND_NUMBER) AS FLOOR_EX
+    ,MOD(FIRST_NUMBER,SECOND_NUMBER) AS MOD_EX
+    ,POWER(FIRST_NUMBER,SECOND_NUMBER) AS POW_EX
+FROM NUMBER_EXAMPLE;
+
+
+SELECT * FROM RMSE_MAE_EXAMPLE2;
+
+DESC RMSE_MAE_EXAMPLE2;
+
+
+-- 정확도 산출하기(ABS(절대값), ROUND(반올림)사용)
+SELECT
+    YEARWEEK
+    ,ACTUAL
+    ,FCST
+    ,ROUND((1-(ABS(FCST-ACTUAL)/FCST))*100,2) AS ACCURACY
+--  ,ROUND((1-(ABS(FCST-ACTUAL)/FCST)),4)*100 AS ACCURACY 도 가능
+FROM RMSE_MAE_EXAMPLE2;
+
+-- 정확도가 50% 미만인 값 찾기 
+SELECT *
+FROM(
+    SELECT
+        YEARWEEK
+        ,ACTUAL
+        ,FCST
+        ,ROUND((1-(ABS(FCST-ACTUAL)/FCST))*100,2) AS ACCURACY
+    FROM RMSE_MAE_EXAMPLE2
+)
+WHERE 1=1
+AND ACCURACY < 50;
+
+-- 날짜 함수 --
+SELECT
+    SYSDATE
+    ,NEXT_DAY(SYSDATE,4)
+    ,LAST_DAY(SYSDATE)
+FROM DUAL;
+
+SELECT 
+SYSDATE,
+TO_CHAR(SYSDATE+7, 'YEAR MON DAY')
+FROM DUAL;
+
+05.29
+[KOPO_SERVER_2]
+
+SELECT * FROM TABS;
+
+-- 05.29. PopQuiz
+-- 1. 
+
+select * from RMSE_MAE_EXAMPLE2;
+
+select yearweek
+, actual
+, fcst
+, (1-(ABS(fcst-actual)/fcst)) as accuracy
+from RMSE_MAE_EXAMPLE2;
+
+CREATE TABLE RMSE_MAE_ST_hml AS
+SELECT yearweek
+, actual
+, fcst
+, (1-(ABS(fcst-actual)/fcst)) as accuracy
+from RMSE_MAE_EXAMPLE2;
+
+select * from RMSE_MAE_ST_hml;
+
+
+-- 2. 
+select sysdate from dual;
+
+-- 3.
+SELECT 
+TO_CHAR(sysdate, 'YYYYIW')
+FROM DUAL;
+
+-- 4.
+select * from CUSTOMERDATA;
+
+SELECT A.*,
+    CASE WHEN SUBSTR(UPPER(A.CUSTID),0,1) = 'B'
+         THEN 0
+         WHEN SUBSTR(UPPER(A.CUSTID),0,1) = 'A'
+         THEN 1
+         WHEN SUBSTR(UPPER(A.CUSTID),0,1) = 'C'
+         THEN 2
+         ELSE 3 END AS SORT_ORDER
+FROM CUSTOMERDATA A
+ORDER BY SORT_ORDER
+;
+
+select substr(UPPER(custid),0,1) from customerdata;
+
+-- 4. (다른 방법) 
+SELECT
+    DATA.*,
+    CASE WHEN DATA.INDEX_COL = 'A' THEN 1
+         WHEN DATA.INDEX_COL = 'B' THEN 0
+         WHEN DATA.INDEX_COL = 'C' THEN 2
+         ELSE 3 END AS PRIO 
+FROM (
+    SELECT
+        A.*,
+        SUBSTR(CUSTID,1,1) AS INDEX_COL
+    FROM CUSTOMERDATA A
+) DATA
+ORDER BY PRIO
+;
+
+
+-- 예제: DR_RESULT_FINAL3 테이블에서 정확도 산출 (예측값이 0인 경우 정확도는 0으로)
+--              정확도 = 1-ABS(예측값-실측값)/예측값
+SELECT * FROM DT_RESULT_FINAL3;
+
+SELECT A.*
+    ,DECODE(A.PREDICTION_QTY,0,0,1-(ABS(REAL_QTY-PREDICTION_QTY)/PREDICTION_QTY)) AS ACCURACY
+    --DECODE(검증할 컬럼명,CASE#1,VALUE#1,OTHERS)
+FROM DT_RESULT_FINAL3 A;
+
+
+-- 집계함수     
+SELECT * FROM KOPO_CHANNEL_SEASONALITY_NEW;
+
+SELECT AVG(QTY) FROM KOPO_CHANNEL_SEASONALITY_NEW;
+
+SELECT REGIONID, AVG(QTY) FROM KOPO_CHANNEL_SEASONALITY_NEW
+GROUP BY REGIONID
+ORDER BY REGIONID;
+
+SELECT 
+    REGIONID
+    ,PRODUCT
+    ,AVG(QTY) 
+FROM KOPO_CHANNEL_SEASONALITY_NEW
+WHERE REGIONID = 'A01'
+-- WHERE 절은 위에 있는 SELECT 문에 조건을 건다
+GROUP BY REGIONID, PRODUCT
+HAVING AVG(QTY) >10000
+-- HAVING은 GROUP BY 한 집계한 결과에 조건을 건다
+ORDER BY REGIONID, PRODUCT;
+-- 마지막으로 ORDER BY 를 통해 정렬 순서 조건을 준다.
+
+
+
+
+-- 집계함수 예제
+-- RMSE_MAE_EXAMPLE 테이블을 활용하여 ITEM 별 RMSE를 구하세요
+-- RMSE = SQRT(SUM(POWER((실측 값-예측 값),2))/COUNT(POWER((실측 값-예측 값),2)))
+-- 더 쉬운 RMSE = SQRT(AVG(POW((실측 값 - 예측 값),2)))
+
+SELECT * FROM RMSE_MAE_EXAMPLE;
+
+SELECT ITEM, SQRT(SUM(POWER((QTY-PREDICTION),2))/COUNT(POWER((QTY-PREDICTION),2))) AS RMSE
+FROM RMSE_MAE_EXAMPLE 
+GROUP BY ITEM;
+
+-- 더 간단한 버전 (AVG = SUM/COUNT)을 응용
+SELECT ITEM, SQRT(AVG(POWER((QTY-PREDICTION),2))) AS RMSE
+FROM RMSE_MAE_EXAMPLE 
+GROUP BY ITEM;
+
+-- 예제 검증 STEP BY STEP
+-- 오차의 제곱의 합
+SELECT SUM(POWER((QTY-PREDICTION),2)) AS SUM_OF_SQUARES
+FROM RMSE_MAE_EXAMPLE
+WHERE ITEM = 'AA';
+-- 오차의 제곱의 개수
+SELECT COUNT(POWER((QTY-PREDICTION),2)) AS NUM_OF_SQUARES
+FROM RMSE_MAE_EXAMPLE
+WHERE ITEM = 'AA';
+-- 오차의 제곱의 합 / 개수
+SELECT SUM(POWER((QTY-PREDICTION),2))/COUNT(POWER((QTY-PREDICTION),2)) AS MEAN_SQUARE_ERROR
+FROM RMSE_MAE_EXAMPLE
+WHERE ITEM = 'AA';
+-- (오차의 제곱의 합 / 개수)의 제곱근 = RMSE
+SELECT SQRT(SUM(POWER((QTY-PREDICTION),2))/COUNT(POWER((QTY-PREDICTION),2))) AS ROOT_MEAN_SQURE_ERROR
+FROM RMSE_MAE_EXAMPLE
+WHERE ITEM = 'AA';
+
+
+
+
+>>>>>>> a74820509863120b4f8635ae99dd104c48f92449
